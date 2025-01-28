@@ -1,8 +1,6 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
 
-const appServe = null;
-
 const createWindow = () => {
     const win = new BrowserWindow({
         width: 1024,
@@ -12,17 +10,8 @@ const createWindow = () => {
         }
     });
 
-    if (app.isPackaged) {
-        appServe(win).then(() => {
-            win.loadURL("app://-");
-        });
-    } else {
-        win.loadURL("http://localhost:3000");
-        win.webContents.openDevTools();
-        win.webContents.on("did-fail-load", (e, code, desc) => {
-            win.webContents.reloadIgnoringCache();
-        });
-    }
+    // open the port that next.js using.
+    win.loadURL("http://localhost:3000");
 }
 
 app.on("ready", () => {
