@@ -10,9 +10,9 @@ import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded';
 import { gray, brand } from '../themePrimitives';
 
 const defaultIconComponent = React.forwardRef<SVGSVGElement, SvgIconProps>((props, ref) => (
-  <UnfoldMoreRoundedIcon fontSize="small" {...props} ref={ref} />
+  <UnfoldMoreRoundedIcon fontSize='small' {...props} ref={ref} />
 ));
-defaultIconComponent.displayName = "DefaultIconComponent";
+defaultIconComponent.displayName = 'DefaultIconComponent';
 
 export const navigationCustomizations: Components<Theme> = {
   MuiMenuItem: {

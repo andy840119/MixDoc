@@ -1,7 +1,5 @@
-import Workspace from "@/workspace/Workspace";
+import Workspace from '@/workspace/Workspace';
 
 export default function Home() {
-  return (
-      <Workspace></Workspace>
-  );
+  return <Workspace></Workspace>;
 }

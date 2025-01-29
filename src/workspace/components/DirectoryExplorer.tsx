@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { SimpleTreeView, TreeItem } from "@mui/x-tree-view";
-import { CircularProgress } from "@mui/material";
+import { useEffect, useState } from 'react';
+import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
+import { CircularProgress } from '@mui/material';
 
 interface FileItem {
   name: string;
@@ -13,13 +13,13 @@ function getLabel(item: FileItem): string {
 }
 
 function getPath(items: FileItem[]): string {
-  return items.map((x) => x.name).join("/");
+  return items.map((x) => x.name).join('/');
 }
 
 function updateTreeWithNewData(
   rootItems: FileItem[],
   itemPath: FileItem[],
-  newChildren: FileItem[],
+  newChildren: FileItem[]
 ): FileItem[] {
   if (itemPath.length === 0) {
     return newChildren;
@@ -42,13 +42,17 @@ function updateTreeWithNewData(
 function renderTree(
   items: FileItem[],
   parentDirectory: FileItem[],
-  onItemClick: (path: FileItem[]) => void,
+  onItemClick: (path: FileItem[]) => void
 ) {
-  function generateTemplate(item: FileItem, currentDirectory: FileItem[], onItemClick: (path: FileItem[]) => void) {
+  function generateTemplate(
+    item: FileItem,
+    currentDirectory: FileItem[],
+    onItemClick: (path: FileItem[]) => void
+  ) {
     if (!item.isDirectory) {
       return null;
     } else if (!item.children) {
-      return <TreeItem itemId={`loading-${item.name}`} label="Loading..." />;
+      return <TreeItem itemId={`loading-${item.name}`} label='Loading...' />;
     } else {
       return renderTree(item.children, currentDirectory, onItemClick);
     }
@@ -77,7 +81,7 @@ export default function DirectoryExplorer() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchItems("", setRootItems);
+    fetchItems('', setRootItems);
   }, []);
 
   async function fetchItems(path: string, updateState: (items: FileItem[]) => void) {
@@ -87,7 +91,7 @@ export default function DirectoryExplorer() {
       const data: FileItem[] = await res.json();
       updateState(data);
     } catch (error) {
-      console.error("Failed to fetch directory:", error);
+      console.error('Failed to fetch directory:', error);
     } finally {
       setLoading(false);
     }
@@ -96,7 +100,7 @@ export default function DirectoryExplorer() {
   async function handleItemClick(itemPath: FileItem[]) {
     const directory = itemPath[itemPath.length - 1];
     if (!directory || !directory.isDirectory) {
-      throw new Error('Directory not found.')
+      throw new Error('Directory not found.');
     }
 
     const currentPath = getPath(itemPath);
@@ -124,11 +128,11 @@ export default function DirectoryExplorer() {
   }
 
   return (
-    <div className="p-5">
-      {(loading && !rootItems) ? (
+    <div className='p-5'>
+      {loading && !rootItems ? (
         <CircularProgress />
       ) : (
-        <SimpleTreeView aria-label="directory structure" expandedItems={Array.from(expandedKeys)}>
+        <SimpleTreeView aria-label='directory structure' expandedItems={Array.from(expandedKeys)}>
           {renderTree(rootItems, [], handleItemClick)}
         </SimpleTreeView>
       )}

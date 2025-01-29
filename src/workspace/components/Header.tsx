@@ -8,7 +8,7 @@ import ColorModeIconDropdown from '../../theme/ColorModeIconDropdown';
 export default function Header() {
   return (
     <Stack
-      direction="row"
+      direction='row'
       sx={{
         display: { xs: 'none', md: 'flex' },
         width: '100%',
@@ -20,8 +20,8 @@ export default function Header() {
       spacing={2}
     >
       <NavbarBreadcrumbs />
-      <Stack direction="row" sx={{ gap: 1 }}>
-        <MenuButton showBadge aria-label="Open notifications">
+      <Stack direction='row' sx={{ gap: 1 }}>
+        <MenuButton showBadge aria-label='Open notifications'>
           <NotificationsRoundedIcon />
         </MenuButton>
         <ColorModeIconDropdown />
