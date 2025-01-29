@@ -12,7 +12,7 @@ import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
-import DirectoryExplorer from "@/workspace/components/DirectoryExplorer";
+import DirectoryExplorer from '@/workspace/components/DirectoryExplorer';
 
 const mainListItems = [
   { text: 'Home', icon: <HomeRoundedIcon /> },
@@ -40,7 +40,7 @@ export default function MenuContent() {
           </ListItem>
         ))}
       </List>
-      <DirectoryExplorer/>
+      <DirectoryExplorer />
       <List dense>
         {secondaryListItems.map((item, index) => (
           <ListItem key={index} disablePadding sx={{ display: 'block' }}>
