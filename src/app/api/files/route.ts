@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-export async function GET(req) {
+export async function GET(req: Request) {
     // use the root folder of the project.
     // todo: should be able to let user select customized folder.
     const baseDir = process.cwd();
@@ -22,10 +22,16 @@ export async function GET(req) {
             headers: { "Content-Type": "application/json" },
         });
     } catch (error) {
+        let errorMessage = "An unknown error occurred";
+
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+
         return new Response(
             JSON.stringify({
                 error: "Could not read directory",
-                details: error.message,
+                details: errorMessage,
             }),
             {
                 status: 500,
