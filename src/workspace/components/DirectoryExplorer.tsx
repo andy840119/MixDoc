@@ -1,42 +1,10 @@
-import { useEffect, useState } from 'react';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { CircularProgress } from '@mui/material';
-
-interface FileItem {
-  name: string;
-  isDirectory: boolean;
-  children?: FileItem[];
-}
+import { useDirectoryStore, FileItem, getPath } from '../store/directoryStore';
+import { useExpandedKeys } from '../hooks/useExpandedDirectoryPaths';
 
 function getLabel(item: FileItem): string {
   return item.isDirectory ? `📁 ${item.name}` : `📄 ${item.name}`;
-}
-
-function getPath(items: FileItem[]): string {
-  return items.map((x) => x.name).join('/');
-}
-
-function updateTreeWithNewData(
-  rootItems: FileItem[],
-  itemPath: FileItem[],
-  newChildren: FileItem[]
-): FileItem[] {
-  if (itemPath.length === 0) {
-    return newChildren;
-  }
-
-  return rootItems.map((item) => {
-    if (item.name === itemPath[0].name) {
-      if (itemPath.length === 1) {
-        return { ...item, children: newChildren };
-      }
-      return {
-        ...item,
-        children: updateTreeWithNewData(item.children || [], itemPath.slice(1), newChildren),
-      };
-    }
-    return item;
-  });
 }
 
 function renderTree(
@@ -76,54 +44,13 @@ function renderTree(
 }
 
 export default function DirectoryExplorer() {
-  const [rootItems, setRootItems] = useState<FileItem[]>([]);
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(false);
+  const { rootItems, loading, handleItemClick } = useDirectoryStore();
+  const { expandedKeys, toggleExpand } = useExpandedKeys();
 
-  useEffect(() => {
-    fetchItems('', setRootItems);
-  }, []);
-
-  async function fetchItems(path: string, updateState: (items: FileItem[]) => void) {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/files?path=${encodeURIComponent(path)}`);
-      const data: FileItem[] = await res.json();
-      updateState(data);
-    } catch (error) {
-      console.error('Failed to fetch directory:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleItemClick(itemPath: FileItem[]) {
-    const directory = itemPath[itemPath.length - 1];
-    if (!directory || !directory.isDirectory) {
-      throw new Error('Directory not found.');
-    }
-
-    const currentPath = getPath(itemPath);
-
-    // update expand status every click.
-    setExpandedKeys((prev) => {
-      const newExpanded = new Set(prev);
-      if (newExpanded.has(currentPath)) {
-        newExpanded.delete(currentPath);
-      } else {
-        newExpanded.add(currentPath);
-      }
-      return newExpanded;
-    });
-
-    // if the children is not empty, means it's already loaded.
-    if (directory.children) {
-      return;
-    }
-
-    // fetch the folder structure and update the root item.
-    await fetchItems(currentPath, (data) => {
-      setRootItems((prev) => updateTreeWithNewData(prev, itemPath, data));
+  function handleDirectoryClick(itemPath: FileItem[]): void {
+    handleItemClick(itemPath).then(() => {
+      const path = getPath(itemPath);
+      toggleExpand(path);
     });
   }
 
@@ -133,7 +60,7 @@ export default function DirectoryExplorer() {
         <CircularProgress />
       ) : (
         <SimpleTreeView aria-label='directory structure' expandedItems={Array.from(expandedKeys)}>
-          {renderTree(rootItems, [], handleItemClick)}
+          {renderTree(rootItems, [], handleDirectoryClick)}
         </SimpleTreeView>
       )}
     </div>
