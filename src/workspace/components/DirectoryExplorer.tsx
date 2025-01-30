@@ -1,6 +1,7 @@
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { CircularProgress } from '@mui/material';
 import { useDirectoryStore, FileItem, getPath } from '../store/directoryStore';
+import { useExpandedKeys } from '../hooks/useExpandedDirectoryPaths';
 
 function getLabel(item: FileItem): string {
   return item.isDirectory ? `📁 ${item.name}` : `📄 ${item.name}`;
@@ -43,7 +44,15 @@ function renderTree(
 }
 
 export default function DirectoryExplorer() {
-  const { rootItems, expandedKeys, loading, handleItemClick } = useDirectoryStore();
+  const { rootItems, loading, handleItemClick } = useDirectoryStore();
+  const { expandedKeys, toggleExpand } = useExpandedKeys();
+
+  function handleDirectoryClick(itemPath: FileItem[]): void {
+    handleItemClick(itemPath).then(() => {
+      const path = getPath(itemPath);
+      toggleExpand(path);
+    });
+  }
 
   return (
     <div className='p-5'>
@@ -51,7 +60,7 @@ export default function DirectoryExplorer() {
         <CircularProgress />
       ) : (
         <SimpleTreeView aria-label='directory structure' expandedItems={Array.from(expandedKeys)}>
-          {renderTree(rootItems, [], handleItemClick)}
+          {renderTree(rootItems, [], handleDirectoryClick)}
         </SimpleTreeView>
       )}
     </div>

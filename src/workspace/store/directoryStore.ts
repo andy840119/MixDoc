@@ -35,7 +35,6 @@ function updateTreeWithNewData(
 
 export function useDirectoryStore() {
   const [rootItems, setRootItems] = useState<FileItem[]>([]);
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
 
   // get the root folder if store is created.
@@ -66,27 +65,11 @@ export function useDirectoryStore() {
     }
   }
 
-  function toggleExpand(itemPath: FileItem[]) {
-    const currentPath = getPath(itemPath);
-
-    setExpandedKeys((prev) => {
-      const newExpanded = new Set(prev);
-      if (newExpanded.has(currentPath)) {
-        newExpanded.delete(currentPath);
-      } else {
-        newExpanded.add(currentPath);
-      }
-      return newExpanded;
-    });
-  }
-
   async function handleItemClick(itemPath: FileItem[]) {
     const directory = itemPath[itemPath.length - 1];
     if (!directory || !directory.isDirectory) {
       throw new Error('Directory not found.');
     }
-
-    toggleExpand(itemPath);
 
     // if the directory already has children, means it's loaded.
     if (directory.children) {
@@ -98,7 +81,6 @@ export function useDirectoryStore() {
 
   return {
     rootItems,
-    expandedKeys,
     loading,
     handleItemClick,
   };
