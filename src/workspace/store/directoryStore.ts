@@ -84,9 +84,71 @@ export function useDirectoryStore() {
     await fetchItems(getPath(itemPath));
   }
 
+  async function createItem(parentPath: FileItem[], name: string, type: FileType) {
+    const fullPath = getPath(parentPath);
+    try {
+      const res = await fetch('/api/files', {
+        method: 'POST',
+        body: JSON.stringify({ path: fullPath, name, type }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to create item');
+      }
+
+      await fetchItems(fullPath);
+    } catch (error) {
+      console.error('Failed to create item:', error);
+    }
+  }
+
+  async function renameItem(itemPath: FileItem[], oldName: string, newName: string) {
+    const fullPath = getPath(itemPath);
+
+    try {
+      const res = await fetch('/api/files', {
+        method: 'PATCH',
+        body: JSON.stringify({ path: fullPath, oldName, newName }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to rename item');
+      }
+
+      await fetchItems(getPath(itemPath));
+    } catch (error) {
+      console.error('Failed to rename item:', error);
+    }
+  }
+
+  async function deleteItem(itemPath: FileItem[], name: string) {
+    const fullPath = getPath(itemPath);
+
+    try {
+      const res = await fetch('/api/files', {
+        method: 'DELETE',
+        body: JSON.stringify({ path: fullPath, name: name }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete item');
+      }
+
+      await fetchItems(getPath(itemPath));
+    } catch (error) {
+      console.error('Failed to delete item:', error);
+    }
+  }
+
   return {
     rootItems,
     loading,
     handleItemClick,
+    createItem,
+    renameItem,
+    deleteItem,
   };
 }
