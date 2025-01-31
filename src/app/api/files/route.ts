@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     // note: this api does not return the file in the folder.
     const result = items.map((item) => ({
       name: item.name,
-      isDirectory: item.isDirectory(),
+      type: item.isDirectory() ? 'directory' : 'file',
     }));
 
     return new Response(JSON.stringify(result), {

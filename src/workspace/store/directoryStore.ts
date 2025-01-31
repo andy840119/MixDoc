@@ -2,8 +2,13 @@ import { useState, useEffect } from 'react';
 
 export interface FileItem {
   name: string;
-  isDirectory: boolean;
+  type: FileType;
   children?: FileItem[];
+}
+
+export enum FileType {
+  File = 'file',
+  Directory = 'directory',
 }
 
 export function getPath(items: FileItem[]): string {
@@ -53,7 +58,7 @@ export function useDirectoryStore() {
         setRootItems((prev) =>
           updateTreeWithNewData(
             prev,
-            path.split('/').map((name) => ({ name, isDirectory: true })),
+            path.split('/').map((name) => ({ name, type: FileType.Directory })),
             data
           )
         );
@@ -66,13 +71,13 @@ export function useDirectoryStore() {
   }
 
   async function handleItemClick(itemPath: FileItem[]) {
-    const directory = itemPath[itemPath.length - 1];
-    if (!directory || !directory.isDirectory) {
+    const fileItem = itemPath[itemPath.length - 1];
+    if (!fileItem || fileItem.type != FileType.Directory) {
       throw new Error('Directory not found.');
     }
 
     // if the directory already has children, means it's loaded.
-    if (directory.children) {
+    if (fileItem.children) {
       return;
     }
 
