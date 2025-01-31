@@ -1,12 +1,13 @@
 import { MouseEvent, useState } from 'react';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { CircularProgress, Menu, MenuItem } from '@mui/material';
-import { FileItem, FileType, getPath, useDirectoryStore } from '../store/directoryStore';
+import ConfirmModal from '@/components/ConfirmModal';
+import { FileItem, FileType, useDirectoryStore } from '../store/directoryStore';
 import { useExpandedKeys } from '../hooks/useExpandedDirectoryPaths';
 import CreateFileModal from './CreateFileModal';
 import RenameFileModal from './RenameFileModal';
-import ConfirmModal from '@/components/ConfirmModal';
-import CreateDirectoryModal from '@/workspace/components/CreateDirectoryModal';
+import CreateDirectoryModal from './CreateDirectoryModal';
+import { Path } from '../types/path';
 
 function getLabel(item: FileItem): string {
   switch (item.type) {
@@ -19,6 +20,10 @@ function getLabel(item: FileItem): string {
   }
 }
 
+function generateKey(path: Path, item: FileItem): string {
+  return path.toString() + '/' + item.name;
+}
+
 enum OpenModalAction {
   CreateFile = 'create_file',
   CreateDirectory = 'create_directory',
@@ -27,59 +32,57 @@ enum OpenModalAction {
 }
 
 function renderTreeInDirectory(
+  path: Path,
   item: FileItem,
-  currentDirectory: FileItem[],
-  onItemClick: (path: FileItem[]) => void,
-  onContextMenuClick: (event: MouseEvent, itemPath: FileItem[]) => void
+  onItemClick: (path: Path, item: FileItem) => void,
+  onContextMenuClick: (path: Path, item: FileItem, event: MouseEvent) => void
 ) {
   if (item.type != FileType.Directory) {
     return null;
   } else if (!item.children) {
     return <TreeItem itemId={`loading-${item.name}`} label='Loading...' />;
   } else {
-    return renderTree(item.children, currentDirectory, onItemClick, onContextMenuClick);
+    return renderTree(path.append(item.name), item.children, onItemClick, onContextMenuClick);
   }
 }
 
 function renderTree(
+  path: Path,
   items: FileItem[],
-  parentDirectory: FileItem[],
-  onItemClick: (path: FileItem[]) => void,
-  onContextMenuClick: (event: MouseEvent, itemPath: FileItem[]) => void
+  onItemClick: (path: Path, item: FileItem) => void,
+  onContextMenuClick: (path: Path, item: FileItem, event: MouseEvent) => void
 ) {
   return items.map((item) => {
-    const currentDirectory = [...parentDirectory, item];
-    const currentPath = getPath(currentDirectory);
-
     function handleContextMenuClick(event: MouseEvent) {
       event.preventDefault();
       event.stopPropagation();
 
-      onContextMenuClick(event, currentDirectory);
+      onContextMenuClick(path, item, event);
     }
 
+    const key = generateKey(path, item);
     return (
       <TreeItem
-        key={currentPath}
-        itemId={currentPath}
+        key={key}
+        itemId={key}
         label={getLabel(item)}
-        onClick={() => item.type === FileType.Directory && onItemClick(currentDirectory)}
+        onClick={() => item.type === FileType.Directory && onItemClick(path, item)}
         onContextMenu={handleContextMenuClick}
       >
-        {renderTreeInDirectory(item, currentDirectory, onItemClick, onContextMenuClick)}
+        {renderTreeInDirectory(path, item, onItemClick, onContextMenuClick)}
       </TreeItem>
     );
   });
 }
 
-function getDirectory(fileItems: FileItem[]): FileItem[] {
-  switch (fileItems[fileItems.length - 1].type) {
+function getCreatePath(path: Path, item: FileItem): Path {
+  switch (item.type) {
     case FileType.Directory:
-      return fileItems;
+      return path.append(item.name);
     case FileType.File:
-      return fileItems.slice(0, -1);
+      return path;
     default:
-      throw new Error(`Unknown file type ${fileItems.length - 1}`);
+      throw new Error(`Unknown file type ${item.type}`);
   }
 }
 
@@ -93,26 +96,28 @@ export default function DirectoryExplorer() {
       x: number;
       y: number;
     } | null;
-    selectedItemPath: FileItem[];
+    selectedPath: Path;
+    selectedFile: FileItem;
   } | null>(null);
 
   const [dialogType, setDialogType] = useState<OpenModalAction | null>(null);
   const [oldFileName, setOldFileName] = useState('');
 
-  function handleDirectoryClick(itemPath: FileItem[]): void {
-    handleItemClick(itemPath).then(() => {
-      const path = getPath(itemPath);
-      toggleExpand(path);
+  function handleDirectoryClick(path: Path, item: FileItem): void {
+    handleItemClick(path, item).then(() => {
+      const key = generateKey(path, item);
+      toggleExpand(key);
     });
   }
 
-  function handleContextMenu(event: MouseEvent, itemPath: FileItem[]) {
+  function handleContextMenu(path: Path, item: FileItem, event: MouseEvent) {
     setContextMenu({
       position: {
         x: event.clientX,
         y: event.clientY,
       },
-      selectedItemPath: itemPath,
+      selectedPath: path,
+      selectedFile: item,
     });
   }
 
@@ -123,15 +128,16 @@ export default function DirectoryExplorer() {
 
     setContextMenu({
       position: null,
-      selectedItemPath: contextMenu?.selectedItemPath,
+      selectedPath: contextMenu.selectedPath,
+      selectedFile: contextMenu.selectedFile,
     });
   }
 
-  function openDialog(type: OpenModalAction, itemPath: FileItem[]) {
+  function openDialog(type: OpenModalAction, item: FileItem) {
     setDialogType(type);
 
     // use the selected file if you want to rename the file.
-    const oldFileName = type === OpenModalAction.Rename ? itemPath[itemPath.length - 1].name : '';
+    const oldFileName = type === OpenModalAction.Rename ? item.name : '';
     setOldFileName(oldFileName);
     handleMenuClose();
   }
@@ -140,10 +146,9 @@ export default function DirectoryExplorer() {
     if (!contextMenu) return;
 
     // if user click the item and trying to create the item, should create in the parent folder.
-    const itemDirectory = getDirectory(contextMenu.selectedItemPath);
-
+    const itemDirectory = getCreatePath(contextMenu.selectedPath, contextMenu.selectedFile);
     createItem(itemDirectory, fileName, FileType.File).then(() => {
-      console.log('Creating new file in:', getPath(itemDirectory), 'with name:', oldFileName);
+      console.log('Creating new file in:', itemDirectory.toString(), 'with name:', oldFileName);
     });
 
     handleDialogClose();
@@ -152,25 +157,20 @@ export default function DirectoryExplorer() {
   function handCreateDirectory(fileName: string): void {
     if (!contextMenu) return;
 
-    debugger;
-    console.log('create directory');
-
     // if user click the item and trying to create the item, should create in the parent folder.
-    const itemDirectory = getDirectory(contextMenu.selectedItemPath);
-
+    const itemDirectory = getCreatePath(contextMenu.selectedPath, contextMenu.selectedFile);
     createItem(itemDirectory, fileName, FileType.Directory).then(() => {
-      console.log('Creating new file in:', getPath(itemDirectory), 'with name:', oldFileName);
+      console.log('Creating new file in:', itemDirectory.toString(), 'with name:', oldFileName);
       handleDialogClose();
     });
   }
 
-  function handleRename(fileName: string): void {
+  function handleRename(newFileName: string): void {
     if (!contextMenu) return;
 
-    const parentFolder = contextMenu.selectedItemPath.slice(0, -1);
-
-    renameItem(parentFolder, oldFileName, fileName).then(() => {
-      console.log('Renaming:', getPath(parentFolder), 'from:', oldFileName, 'to:', oldFileName);
+    const parentFolder = contextMenu.selectedPath;
+    renameItem(parentFolder, oldFileName, newFileName).then(() => {
+      console.log('Renaming:', parentFolder.toString(), 'from:', oldFileName, 'to:', oldFileName);
       handleDialogClose();
     });
   }
@@ -178,11 +178,11 @@ export default function DirectoryExplorer() {
   function handleDelete(): void {
     if (!contextMenu) return;
 
-    const parentFolder = contextMenu.selectedItemPath.slice(0, -1);
-    const fileName = contextMenu.selectedItemPath[contextMenu.selectedItemPath.length - 1].name;
+    const parentFolder = contextMenu.selectedPath;
+    const fileName = contextMenu.selectedFile.name;
 
     deleteItem(parentFolder, fileName).then(() => {
-      console.log('Deleting:', getPath(parentFolder));
+      console.log('Deleting:', parentFolder.toString());
       handleDialogClose();
     });
   }
@@ -199,7 +199,7 @@ export default function DirectoryExplorer() {
         <CircularProgress />
       ) : (
         <SimpleTreeView aria-label='directory structure' expandedItems={Array.from(expandedKeys)}>
-          {renderTree(rootItems, [], handleDirectoryClick, handleContextMenu)}
+          {renderTree(new Path([]), rootItems, handleDirectoryClick, handleContextMenu)}
         </SimpleTreeView>
       )}
 
@@ -214,20 +214,18 @@ export default function DirectoryExplorer() {
             : undefined
         }
       >
-        <MenuItem
-          onClick={() => openDialog(OpenModalAction.CreateFile, contextMenu!.selectedItemPath)}
-        >
+        <MenuItem onClick={() => openDialog(OpenModalAction.CreateFile, contextMenu!.selectedFile)}>
           Create File
         </MenuItem>
         <MenuItem
-          onClick={() => openDialog(OpenModalAction.CreateDirectory, contextMenu!.selectedItemPath)}
+          onClick={() => openDialog(OpenModalAction.CreateDirectory, contextMenu!.selectedFile)}
         >
           Create Directory
         </MenuItem>
-        <MenuItem onClick={() => openDialog(OpenModalAction.Rename, contextMenu!.selectedItemPath)}>
+        <MenuItem onClick={() => openDialog(OpenModalAction.Rename, contextMenu!.selectedFile)}>
           Rename
         </MenuItem>
-        <MenuItem onClick={() => openDialog(OpenModalAction.Delete, contextMenu!.selectedItemPath)}>
+        <MenuItem onClick={() => openDialog(OpenModalAction.Delete, contextMenu!.selectedFile)}>
           Delete
         </MenuItem>
       </Menu>

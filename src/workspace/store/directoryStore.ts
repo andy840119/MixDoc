@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Path } from '../types/path';
 
 export interface FileItem {
   name: string;
@@ -11,27 +12,25 @@ export enum FileType {
   Directory = 'directory',
 }
 
-export function getPath(items: FileItem[]): string {
-  return items.map((x) => x.name).join('/');
-}
-
 function updateTreeWithNewData(
   rootItems: FileItem[],
-  itemPath: FileItem[],
+  path: Path,
   newChildren: FileItem[]
 ): FileItem[] {
-  if (itemPath.length === 0) {
+  if (path.directories.length === 0) {
     return newChildren;
   }
 
   return rootItems.map((item) => {
-    if (item.name === itemPath[0].name) {
-      if (itemPath.length === 1) {
+    if (item.name === path.directories[0]) {
+      if (path.directories.length === 1) {
         return { ...item, children: newChildren };
       }
+
+      const newPath = new Path(path.directories.slice(1));
       return {
         ...item,
-        children: updateTreeWithNewData(item.children || [], itemPath.slice(1), newChildren),
+        children: updateTreeWithNewData(item.children || [], newPath, newChildren),
       };
     }
     return item;
@@ -44,24 +43,18 @@ export function useDirectoryStore() {
 
   // get the root folder if store is created.
   useEffect(() => {
-    fetchItems('');
+    fetchItems(new Path([]));
   }, []);
 
-  async function fetchItems(path: string) {
+  async function fetchItems(path: Path) {
     setLoading(true);
     try {
-      const res = await fetch(`/api/files?path=${encodeURIComponent(path)}`);
+      const res = await fetch(`/api/files?path=${encodeURIComponent(path.fullPath)}`);
       const data: FileItem[] = await res.json();
-      if (path === '') {
+      if (path.directories.length === 0) {
         setRootItems(data);
       } else {
-        setRootItems((prev) =>
-          updateTreeWithNewData(
-            prev,
-            path.split('/').map((name) => ({ name, type: FileType.Directory })),
-            data
-          )
-        );
+        setRootItems((prev) => updateTreeWithNewData(prev, path, data));
       }
     } catch (error) {
       console.error('Failed to fetch directory:', error);
@@ -70,26 +63,24 @@ export function useDirectoryStore() {
     }
   }
 
-  async function handleItemClick(itemPath: FileItem[]) {
-    const fileItem = itemPath[itemPath.length - 1];
-    if (!fileItem || fileItem.type != FileType.Directory) {
+  async function handleItemClick(path: Path, item: FileItem) {
+    if (item.type != FileType.Directory) {
       throw new Error('Directory not found.');
     }
 
     // if the directory already has children, means it's loaded.
-    if (fileItem.children) {
+    if (item.children) {
       return;
     }
 
-    await fetchItems(getPath(itemPath));
+    await fetchItems(path.append(item.name));
   }
 
-  async function createItem(parentPath: FileItem[], name: string, type: FileType) {
-    const fullPath = getPath(parentPath);
+  async function createItem(path: Path, name: string, type: FileType) {
     try {
       const res = await fetch('/api/files', {
         method: 'POST',
-        body: JSON.stringify({ path: fullPath, name, type }),
+        body: JSON.stringify({ path: path.fullPath, name, type }),
         headers: { 'Content-Type': 'application/json' },
       });
 
@@ -97,19 +88,17 @@ export function useDirectoryStore() {
         throw new Error('Failed to create item');
       }
 
-      await fetchItems(fullPath);
+      await fetchItems(path);
     } catch (error) {
       console.error('Failed to create item:', error);
     }
   }
 
-  async function renameItem(itemPath: FileItem[], oldName: string, newName: string) {
-    const fullPath = getPath(itemPath);
-
+  async function renameItem(path: Path, oldName: string, newName: string) {
     try {
       const res = await fetch('/api/files', {
         method: 'PATCH',
-        body: JSON.stringify({ path: fullPath, oldName, newName }),
+        body: JSON.stringify({ path: path.fullPath, oldName, newName }),
         headers: { 'Content-Type': 'application/json' },
       });
 
@@ -117,19 +106,17 @@ export function useDirectoryStore() {
         throw new Error('Failed to rename item');
       }
 
-      await fetchItems(getPath(itemPath));
+      await fetchItems(path);
     } catch (error) {
       console.error('Failed to rename item:', error);
     }
   }
 
-  async function deleteItem(itemPath: FileItem[], name: string) {
-    const fullPath = getPath(itemPath);
-
+  async function deleteItem(path: Path, name: string) {
     try {
       const res = await fetch('/api/files', {
         method: 'DELETE',
-        body: JSON.stringify({ path: fullPath, name: name }),
+        body: JSON.stringify({ path: path.fullPath, name: name }),
         headers: { 'Content-Type': 'application/json' },
       });
 
@@ -137,7 +124,7 @@ export function useDirectoryStore() {
         throw new Error('Failed to delete item');
       }
 
-      await fetchItems(getPath(itemPath));
+      await fetchItems(path);
     } catch (error) {
       console.error('Failed to delete item:', error);
     }
