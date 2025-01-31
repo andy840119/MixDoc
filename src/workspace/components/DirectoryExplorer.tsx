@@ -1,10 +1,17 @@
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { CircularProgress } from '@mui/material';
-import { useDirectoryStore, FileItem, getPath } from '../store/directoryStore';
+import {useDirectoryStore, FileItem, getPath, FileType} from '../store/directoryStore';
 import { useExpandedKeys } from '../hooks/useExpandedDirectoryPaths';
 
 function getLabel(item: FileItem): string {
-  return item.isDirectory ? `📁 ${item.name}` : `📄 ${item.name}`;
+  switch (item.type) {
+    case FileType.Directory:
+      return `📁 ${item.name}`;
+    case FileType.File:
+      return `📄 ${item.name}`;
+    default:
+      throw new Error(`Unknown file type ${item.type}`);
+  }
 }
 
 function renderTree(
@@ -17,7 +24,7 @@ function renderTree(
     currentDirectory: FileItem[],
     onItemClick: (path: FileItem[]) => void
   ) {
-    if (!item.isDirectory) {
+    if (item.type != FileType.Directory) {
       return null;
     } else if (!item.children) {
       return <TreeItem itemId={`loading-${item.name}`} label='Loading...' />;
@@ -35,7 +42,7 @@ function renderTree(
         key={currentPath}
         itemId={currentPath}
         label={getLabel(item)}
-        onClick={() => item.isDirectory && onItemClick(currentDirectory)}
+        onClick={() => item.type === FileType.Directory && onItemClick(currentDirectory)}
       >
         {generateTemplate(item, currentDirectory, onItemClick)}
       </TreeItem>
