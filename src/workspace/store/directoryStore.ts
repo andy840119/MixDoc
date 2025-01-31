@@ -49,7 +49,7 @@ export function useDirectoryStore() {
   async function fetchItems(path: Path) {
     setLoading(true);
     try {
-      const res = await fetch(`/api/files?path=${encodeURIComponent(path.fullPath)}`);
+      const res = await fetch(`/api/directory?path=${encodeURIComponent(path.fullPath)}`);
       const data: FileItem[] = await res.json();
       if (path.directories.length === 0) {
         setRootItems(data);
@@ -78,7 +78,7 @@ export function useDirectoryStore() {
 
   async function createItem(path: Path, name: string, type: FileType) {
     try {
-      const res = await fetch('/api/files', {
+      const res = await fetch('/api/directory', {
         method: 'POST',
         body: JSON.stringify({ path: path.fullPath, name, type }),
         headers: { 'Content-Type': 'application/json' },
@@ -96,7 +96,7 @@ export function useDirectoryStore() {
 
   async function renameItem(path: Path, oldName: string, newName: string) {
     try {
-      const res = await fetch('/api/files', {
+      const res = await fetch('/api/directory', {
         method: 'PATCH',
         body: JSON.stringify({ path: path.fullPath, oldName, newName }),
         headers: { 'Content-Type': 'application/json' },
@@ -114,7 +114,7 @@ export function useDirectoryStore() {
 
   async function deleteItem(path: Path, name: string) {
     try {
-      const res = await fetch('/api/files', {
+      const res = await fetch('/api/directory', {
         method: 'DELETE',
         body: JSON.stringify({ path: path.fullPath, name: name }),
         headers: { 'Content-Type': 'application/json' },
