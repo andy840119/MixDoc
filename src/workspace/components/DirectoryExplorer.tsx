@@ -2,12 +2,12 @@ import { MouseEvent, useState } from 'react';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { CircularProgress, Menu, MenuItem } from '@mui/material';
 import ConfirmModal from '@/components/ConfirmModal';
-import { DirectoryNode, Node, NodeType, useDirectoryStore } from '../store/directoryStore';
+import { useDirectoryStore } from '../store/directoryStore';
 import { useExpandedKeys } from '../hooks/useExpandedDirectoryPaths';
 import CreateFileModal from './CreateFileModal';
 import RenameFileModal from './RenameFileModal';
 import CreateDirectoryModal from './CreateDirectoryModal';
-import { Path } from '../types/path';
+import { DirectoryNode, Node, NodeType, Path } from '../types/node';
 
 function getLabel(node: Node): string {
   switch (node.type) {

@@ -1,23 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Path } from '../types/path';
-
-export type FileNode = {
-  type: NodeType.File;
-  name: string;
-};
-
-export type DirectoryNode = {
-  type: NodeType.Directory;
-  name: string;
-  children?: Node[];
-};
-
-export type Node = FileNode | DirectoryNode;
-
-export enum NodeType {
-  File = 'file',
-  Directory = 'directory',
-}
+import { DirectoryNode, Node, NodeType, Path } from '../types/node';
 
 function updateTreeWithNewData(
   directory: DirectoryNode,

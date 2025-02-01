@@ -1,3 +1,21 @@
+export type FileNode = {
+  type: NodeType.File;
+  name: string;
+};
+
+export type DirectoryNode = {
+  type: NodeType.Directory;
+  name: string;
+  children?: Node[];
+};
+
+export type Node = FileNode | DirectoryNode;
+
+export enum NodeType {
+  File = 'file',
+  Directory = 'directory',
+}
+
 export type Directory = string;
 
 function validateDirectory(name: Directory): boolean {
