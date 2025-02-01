@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Path } from '../types/path';
 
-type FileNode = {
+export type FileNode = {
   type: NodeType.File;
   name: string;
 };
 
-type DirectoryNode = {
+export type DirectoryNode = {
   type: NodeType.Directory;
   name: string;
   children?: Node[];
@@ -19,33 +19,55 @@ export enum NodeType {
   Directory = 'directory',
 }
 
-function updateTreeWithNewData(rootNodes: Node[], path: Path, newChildren: Node[]): Node[] {
+function updateTreeWithNewData(
+  directory: DirectoryNode,
+  path: Path,
+  newChildren: Node[]
+): DirectoryNode {
   if (path.directories.length === 0) {
-    return newChildren;
+    return {
+      ...directory,
+      children: newChildren,
+    };
   }
 
-  return rootNodes.map((node) => {
-    if (node.name === path.directories[0]) {
-      if (path.directories.length === 1) {
-        return { ...node, children: newChildren };
-      }
+  const children = directory.children?.map((node) => {
+    switch (node.type) {
+      case NodeType.File:
+        // skip all files.
+        return node;
 
-      const newPath = new Path(path.directories.slice(1));
-      if (node.type === NodeType.Directory) {
-        return {
-          ...node,
-          children: updateTreeWithNewData(node.children || [], newPath, newChildren),
-        };
-      }
+      case NodeType.Directory:
+        // skip the mismatch folder.
+        if (node.name !== path.directories[0]) {
+          return node;
+        }
 
-      return node;
+        // if it's the last one, override the children.
+        if (path.directories.length === 1) {
+          return { ...node, children: newChildren };
+        }
+
+        // check the child folder.
+        const newPath = new Path(path.directories.slice(1));
+        return updateTreeWithNewData(node, newPath, newChildren);
+
+      default:
+        throw new Error('Unknown type');
     }
-    return node;
   });
+
+  return {
+    ...directory,
+    children: children,
+  };
 }
 
 export function useDirectoryStore() {
-  const [rootNodes, setRootNodes] = useState<Node[]>([]);
+  const [rootNode, setRootNode] = useState<DirectoryNode>({
+    type: NodeType.Directory,
+    name: '',
+  });
   const [loading, setLoading] = useState(false);
 
   // get the root folder if store is created.
@@ -58,11 +80,7 @@ export function useDirectoryStore() {
     try {
       const res = await fetch(`/api/directory?path=${encodeURIComponent(path.fullPath)}`);
       const data: Node[] = await res.json();
-      if (path.directories.length === 0) {
-        setRootNodes(data);
-      } else {
-        setRootNodes((prev) => updateTreeWithNewData(prev, path, data));
-      }
+      setRootNode((root) => updateTreeWithNewData(root, path, data));
     } catch (error) {
       console.error('Failed to fetch directory:', error);
     } finally {
@@ -134,7 +152,7 @@ export function useDirectoryStore() {
   }
 
   return {
-    rootNodes,
+    rootNode,
     loading,
     handleNodeClick,
     createNode,

@@ -2,7 +2,7 @@ import { MouseEvent, useState } from 'react';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { CircularProgress, Menu, MenuItem } from '@mui/material';
 import ConfirmModal from '@/components/ConfirmModal';
-import { Node, NodeType, useDirectoryStore } from '../store/directoryStore';
+import { DirectoryNode, Node, NodeType, useDirectoryStore } from '../store/directoryStore';
 import { useExpandedKeys } from '../hooks/useExpandedDirectoryPaths';
 import CreateFileModal from './CreateFileModal';
 import RenameFileModal from './RenameFileModal';
@@ -42,17 +42,17 @@ function renderTreeInDirectory(
   } else if (!node.children) {
     return <TreeItem itemId={`loading-${node.name}`} label='Loading...' />;
   } else {
-    return renderTree(path.append(node.name), node.children, onNodeClick, onContextMenuClick);
+    return renderTree(path.append(node.name), node, onNodeClick, onContextMenuClick);
   }
 }
 
 function renderTree(
   path: Path,
-  nodes: Node[],
+  directory: DirectoryNode,
   onNodeClick: (path: Path, node: Node) => void,
   onContextMenuClick: (path: Path, node: Node, event: MouseEvent) => void
 ) {
-  return nodes.map((node) => {
+  return directory.children?.map((node) => {
     function handleContextMenuClick(event: MouseEvent) {
       event.preventDefault();
       event.stopPropagation();
@@ -87,7 +87,7 @@ function getCreatePath(path: Path, node: Node): Path {
 }
 
 export default function DirectoryExplorer() {
-  const { rootNodes, loading, handleNodeClick, createNode, renameNode, deleteNode } =
+  const { rootNode, loading, handleNodeClick, createNode, renameNode, deleteNode } =
     useDirectoryStore();
   const { expandedKeys, toggleExpand } = useExpandedKeys();
 
@@ -204,11 +204,11 @@ export default function DirectoryExplorer() {
 
   return (
     <div className='p-5'>
-      {loading && !rootNodes ? (
+      {loading && !rootNode.children ? (
         <CircularProgress />
       ) : (
         <SimpleTreeView aria-label='directory structure' expandedItems={Array.from(expandedKeys)}>
-          {renderTree(new Path([]), rootNodes, handleDirectoryClick, handleContextMenu)}
+          {renderTree(new Path([]), rootNode, handleDirectoryClick, handleContextMenu)}
         </SimpleTreeView>
       )}
 
