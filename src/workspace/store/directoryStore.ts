@@ -1,11 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Path } from '../types/path';
 
-export interface Node {
+type FileNode = {
+  type: NodeType.File;
   name: string;
-  type: NodeType;
+};
+
+type DirectoryNode = {
+  type: NodeType.Directory;
+  name: string;
   children?: Node[];
-}
+};
+
+export type Node = FileNode | DirectoryNode;
 
 export enum NodeType {
   File = 'file',
@@ -24,10 +31,14 @@ function updateTreeWithNewData(rootNodes: Node[], path: Path, newChildren: Node[
       }
 
       const newPath = new Path(path.directories.slice(1));
-      return {
-        ...node,
-        children: updateTreeWithNewData(node.children || [], newPath, newChildren),
-      };
+      if (node.type === NodeType.Directory) {
+        return {
+          ...node,
+          children: updateTreeWithNewData(node.children || [], newPath, newChildren),
+        };
+      }
+
+      return node;
     }
     return node;
   });

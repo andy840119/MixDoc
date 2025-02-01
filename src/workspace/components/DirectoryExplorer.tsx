@@ -16,7 +16,7 @@ function getLabel(node: Node): string {
     case NodeType.File:
       return `📄 ${node.name}`;
     default:
-      throw new Error(`Unknown file type ${node.type}`);
+      throw new Error(`Unknown file type.`);
   }
 }
 
@@ -82,7 +82,7 @@ function getCreatePath(path: Path, node: Node): Path {
     case NodeType.File:
       return path;
     default:
-      throw new Error(`Unknown node type ${node.type}`);
+      throw new Error(`Unknown node type.`);
   }
 }
 
