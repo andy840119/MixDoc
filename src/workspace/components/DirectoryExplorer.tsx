@@ -104,10 +104,19 @@ export default function DirectoryExplorer() {
   const [fileName, setFileName] = useState('');
 
   function handleDirectoryClick(path: Path, node: Node): void {
-    handleNodeClick(path, node).then(() => {
-      const key = generateKey(path, node);
-      toggleExpand(key);
-    });
+    switch (node.type) {
+      case NodeType.Directory:
+        handleNodeClick(path, node).then(() => {
+          const key = generateKey(path, node);
+          toggleExpand(key);
+        });
+        break;
+      case NodeType.File:
+        // todo: open the file.
+        break;
+      default:
+        throw new Error(`Unknown node type.`);
+    }
   }
 
   function handleContextMenu(path: Path, node: Node, event: MouseEvent) {

@@ -70,11 +70,7 @@ export function useDirectoryStore() {
     }
   }
 
-  async function handleNodeClick(path: Path, node: Node) {
-    if (node.type != NodeType.Directory) {
-      throw new Error('Directory not found.');
-    }
-
+  async function handleNodeClick(path: Path, node: DirectoryNode) {
     // if the directory already has children, means it's loaded.
     if (node.children) {
       return;
