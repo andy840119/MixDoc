@@ -8,6 +8,7 @@ import CreateFileModal from './CreateFileModal';
 import RenameFileModal from './RenameFileModal';
 import CreateDirectoryModal from './CreateDirectoryModal';
 import { DirectoryNode, Node, NodeType, Path } from '../types/node';
+import { useWorkingFilesStore } from '../store/workingFilesStore';
 
 function getLabel(node: Node): string {
   switch (node.type) {
@@ -66,7 +67,7 @@ function renderTree(
         key={key}
         itemId={key}
         label={getLabel(node)}
-        onClick={() => node.type === NodeType.Directory && onNodeClick(path, node)}
+        onClick={() => onNodeClick(path, node)}
         onContextMenu={handleContextMenuClick}
       >
         {renderTreeInDirectory(path, node, onNodeClick, onContextMenuClick)}
@@ -89,6 +90,7 @@ function getCreatePath(path: Path, node: Node): Path {
 export default function DirectoryExplorer() {
   const { rootNode, loading, handleNodeClick, createNode, renameNode, deleteNode } =
     useDirectoryStore();
+  const { openFile } = useWorkingFilesStore();
   const { expandedKeys, toggleExpand } = useExpandedKeys();
 
   const [contextMenu, setContextMenu] = useState<{
@@ -112,7 +114,7 @@ export default function DirectoryExplorer() {
         });
         break;
       case NodeType.File:
-        // todo: open the file.
+        openFile(path, node);
         break;
       default:
         throw new Error(`Unknown node type.`);
