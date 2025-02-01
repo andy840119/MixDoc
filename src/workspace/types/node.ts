@@ -1,11 +1,11 @@
 export type FileNode = {
-  type: NodeType.File;
-  name: string;
+  readonly type: NodeType.File;
+  readonly name: string;
 };
 
 export type DirectoryNode = {
-  type: NodeType.Directory;
-  name: string;
+  readonly type: NodeType.Directory;
+  readonly name: string;
   children?: Node[];
 };
 
