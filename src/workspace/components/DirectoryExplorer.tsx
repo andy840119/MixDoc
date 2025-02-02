@@ -2,12 +2,12 @@ import { MouseEvent, useState } from 'react';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { CircularProgress, Menu, MenuItem } from '@mui/material';
 import ConfirmModal from '@/components/ConfirmModal';
-import { DirectoryNode, Node, NodeType, useDirectoryStore } from '../store/directoryStore';
 import { useExpandedKeys } from '../hooks/useExpandedDirectoryPaths';
 import CreateFileModal from './CreateFileModal';
 import RenameFileModal from './RenameFileModal';
 import CreateDirectoryModal from './CreateDirectoryModal';
-import { Path } from '../types/path';
+import { DirectoryNode, Node, NodeType, Path } from '../types/node';
+import { useWorkspace } from '../context/WorkspaceContext';
 
 function getLabel(node: Node): string {
   switch (node.type) {
@@ -66,7 +66,7 @@ function renderTree(
         key={key}
         itemId={key}
         label={getLabel(node)}
-        onClick={() => node.type === NodeType.Directory && onNodeClick(path, node)}
+        onClick={() => onNodeClick(path, node)}
         onContextMenu={handleContextMenuClick}
       >
         {renderTreeInDirectory(path, node, onNodeClick, onContextMenuClick)}
@@ -88,7 +88,8 @@ function getCreatePath(path: Path, node: Node): Path {
 
 export default function DirectoryExplorer() {
   const { rootNode, loading, handleNodeClick, createNode, renameNode, deleteNode } =
-    useDirectoryStore();
+    useWorkspace().directoryStore;
+  const { openFile } = useWorkspace().workingFileStore;
   const { expandedKeys, toggleExpand } = useExpandedKeys();
 
   const [contextMenu, setContextMenu] = useState<{
@@ -112,7 +113,7 @@ export default function DirectoryExplorer() {
         });
         break;
       case NodeType.File:
-        // todo: open the file.
+        openFile(path, node);
         break;
       default:
         throw new Error(`Unknown node type.`);
