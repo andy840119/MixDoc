@@ -2,13 +2,12 @@ import { MouseEvent, useState } from 'react';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { CircularProgress, Menu, MenuItem } from '@mui/material';
 import ConfirmModal from '@/components/ConfirmModal';
-import { useDirectoryStore } from '../store/directoryStore';
 import { useExpandedKeys } from '../hooks/useExpandedDirectoryPaths';
 import CreateFileModal from './CreateFileModal';
 import RenameFileModal from './RenameFileModal';
 import CreateDirectoryModal from './CreateDirectoryModal';
 import { DirectoryNode, Node, NodeType, Path } from '../types/node';
-import { useWorkingFilesStore } from '../store/workingFilesStore';
+import { useWorkspace } from '../context/WorkspaceContext';
 
 function getLabel(node: Node): string {
   switch (node.type) {
@@ -89,8 +88,8 @@ function getCreatePath(path: Path, node: Node): Path {
 
 export default function DirectoryExplorer() {
   const { rootNode, loading, handleNodeClick, createNode, renameNode, deleteNode } =
-    useDirectoryStore();
-  const { openFile } = useWorkingFilesStore();
+    useWorkspace().directoryStore;
+  const { openFile } = useWorkspace().workingFileStore;
   const { expandedKeys, toggleExpand } = useExpandedKeys();
 
   const [contextMenu, setContextMenu] = useState<{

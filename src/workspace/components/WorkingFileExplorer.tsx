@@ -1,8 +1,9 @@
 import { MouseEvent, useMemo, useState } from 'react';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { CircularProgress, Menu, MenuItem } from '@mui/material';
-import { WorkingFile, useWorkingFilesStore } from '../store/workingFilesStore';
+import { WorkingFile } from '../store/workingFilesStore';
 import { DirectoryNode, FileNode, Node, NodeType, Path } from '../types/node';
+import { useWorkspace } from '../context/WorkspaceContext';
 
 /**
  * Convert the paths list to tree.
@@ -77,7 +78,8 @@ function renderTree(
 }
 
 export default function WorkingFilesExplorer() {
-  const { workingFiles, loading, openFile, resetChange, closeFile } = useWorkingFilesStore();
+  const { workingFiles, loading, openFile, resetChange, closeFile } =
+    useWorkspace().workingFileStore;
   const node = useMemo(() => buildFileTree(workingFiles), [workingFiles]);
 
   const [contextMenu, setContextMenu] = useState<{
